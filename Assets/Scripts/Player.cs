@@ -2,8 +2,26 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>Sent from client to server.</summary>
+/// //CHECKTHIS 
+//public enum AnimationState
+//{
+//    idleStanding = 1
+//}
+
+
+
 public class Player : MonoBehaviour
 {
+    //CHECKTHIS DELETE
+    public Animator animator;
+
+    [SerializeField]
+    private Weapon currentWeapon;
+
+    [SerializeField]
+    private LayerMask mask;
+
     public int id;
     public string username;
     public CharacterController controller;
@@ -16,6 +34,8 @@ public class Player : MonoBehaviour
     public float maxHealth = 100f;
     public int itemAmount = 0;
     public int maxItemAmount = 3;
+    public State state = State.rifleIdle;
+    public bool isJumping = false;
 
     private bool[] inputs;
     private float yVelocity = 0f;
@@ -47,7 +67,13 @@ public class Player : MonoBehaviour
         if (inputs[0])
         {
             _inputDirection.y += 1;
+           // animator.SetInteger("State", 1);
+
         }
+        //else
+        //{
+        //    animator.SetInteger("State", 0);
+        //}
         if (inputs[1])
         {
             _inputDirection.y -= 1;
@@ -62,6 +88,9 @@ public class Player : MonoBehaviour
         }
 
         Move(_inputDirection);
+
+        animator.SetInteger("State", (int)this.state);
+        ServerSend.PlayerState(this);
     }
 
     private void Move(Vector2 _inputDirection)
@@ -72,9 +101,11 @@ public class Player : MonoBehaviour
         if (controller.isGrounded)
         {
             yVelocity = 0f;
+            isJumping = false;
             if (inputs[4])
             {
                 yVelocity = jumpSpeed;
+                isJumping = true;
             }
         }
         yVelocity += gravity;
@@ -86,6 +117,10 @@ public class Player : MonoBehaviour
 
         // POSSIBLE CHANGE Server currently changes rotation based on what it recieves from client.
         ServerSend.PlayerRotation(this);
+
+        StateMachine.UpdateMovementState(this, _inputDirection, isJumping);
+
+        //ServerSend.PlayerAnimationState(this);
     }
 
     public void SetInput(bool[] _inputs, Quaternion _rotation)
@@ -101,11 +136,24 @@ public class Player : MonoBehaviour
             return;
         }
 
-        if(Physics.Raycast(shootOrigin.position, _viewDirection, out RaycastHit _hit, 25f))
+        //RaycastHit _hit;
+        //if (Physics.Raycast(cam.transform.position, cam.transform.forward, out _hit, currentWeapon.range, mask))
+        //{
+        //    //Debug.DrawRay(cam.transform.position, cam.transform.forward, Color.green);
+        //    Debug.Log(_hit.collider.transform.name);
+        //    if (_hit.collider.tag == PLAYER_TAG)
+        //    {
+        //        CmdPlayerShot(_hit.collider.transform.root.name, currentWeapon.damage);
+        //    }
+        //}
+
+
+        if (Physics.Raycast(shootOrigin.position, _viewDirection, out RaycastHit _hit, 25f, mask))
         {
+            Debug.Log($"Plyaer Hit: {_hit.collider.gameObject.layer}, {_hit.collider.tag}");
             if (_hit.collider.CompareTag("Player"))
             {
-                _hit.collider.GetComponent<Player>().TakeDamage(50f);
+                _hit.collider.transform.root.GetComponent<Player>().TakeDamage(50f);
             }
         }
     }
@@ -163,4 +211,10 @@ public class Player : MonoBehaviour
         itemAmount++;
         return true;
     }
+
+    //public void UpdateState()
+    //{
+        
+    //    //ServerSend.PlayerAnimationState(this);
+    //}
 }

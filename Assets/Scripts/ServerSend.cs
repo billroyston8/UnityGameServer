@@ -89,6 +89,7 @@ public class ServerSend
         {
             _packet.Write(_player.id);
             _packet.Write(_player.transform.position);
+            //TODO_packet.Write(_player.transform.position);
 
             SendUDPDataToAll(_packet);
         }
@@ -102,6 +103,18 @@ public class ServerSend
             _packet.Write(_player.transform.rotation);
 
             SendUDPDataToAll(_player.id, _packet);
+        }
+    }
+
+    public static void PlayerState(Player _player)
+    {
+        using (Packet _packet = new Packet((int)ServerPackets.playerState))
+        {
+            _packet.Write(_player.id);
+            _packet.Write((int)_player.state);
+
+            SendTCPDataToAll(_player.id, _packet);
+            //SendUDPDataToAll(_player.id, _packet);
         }
     }
 

@@ -51,6 +51,7 @@ public class Projectile : MonoBehaviour
         {
             if (_collider.CompareTag("Player"))
             {
+                //CHECKTHIS put root transform in
                 _collider.GetComponent<Player>().TakeDamage(explosionDamage);
             }
         }
